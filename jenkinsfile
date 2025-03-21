@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'docker:latest'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    agent any
 
     tools {
         nodejs 'NodeJS' // Nom de l'outil configuré dans Jenkins
@@ -22,10 +17,30 @@ pipeline {
             }
         }
 
-        stage('Check Docker') {
+        stage('Install Docker') {
             steps {
                 script {
-                    sh 'docker version' // Vérifier la version de Docker dans le conteneur DinD
+                    // Installer Docker
+                    sh '''
+                    sudo apt-get update
+                    sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+                    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+                    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+                    sudo apt-get update
+                    sudo apt-get install -y docker-ce
+                    sudo systemctl enable docker
+                    sudo systemctl start docker
+                    '''
+                }
+            }
+        }
+
+        stage('Docker Commands') {
+            steps {
+                script {
+                    // Vérifier que Docker est installé et fonctionnel
+                    sh 'docker --version'
+                    sh 'docker pull docker:latest'
                 }
             }
         }
