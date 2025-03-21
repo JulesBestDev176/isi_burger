@@ -12,9 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('name'); 
-            $table->string('nom')->nullable(); 
-            $table->string('prenom')->nullable();
+            // Ajouter la colonne 'nom' si elle n'existe pas
+            if (!Schema::hasColumn('users', 'nom')) {
+                $table->string('nom')->nullable(); 
+            }
+
+            // Ajouter la colonne 'prenom' si elle n'existe pas
+            if (!Schema::hasColumn('users', 'prenom')) {
+                $table->string('prenom')->nullable();
+            }
         });
     }
 
@@ -24,7 +30,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('name');
+            // Supprimer les colonnes 'nom' et 'prenom'
             $table->dropColumn(['nom', 'prenom']); 
         });
     }
