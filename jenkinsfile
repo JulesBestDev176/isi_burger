@@ -22,12 +22,20 @@ pipeline {
             }
         }
 
-        stage('Install Node.js') {
+        stage('Check Docker') {
             steps {
                 script {
-                    // Utilisation de Node.js configuré par Jenkins tool
-                    sh 'node --version' // Affiche la version de Node.js
-                    sh 'npm install'    // Installe les dépendances
+                    sh 'docker version' // Exécuter Docker sans spécifier de tool
+                }
+            }
+        }
+
+        stage('Install Node.js') {
+            steps {
+                nodejs(nodeJSInstallationName: 'NodeJS') {
+                    sh 'node --version'
+                    sh 'npm install'
+                    sh 'npm run build'
                 }
             }
         }
