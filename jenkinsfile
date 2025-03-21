@@ -1,11 +1,8 @@
 pipeline {
-    docker {
-        image 'docker:latest'
-        args '-v /var/run/docker.sock:/var/run/docker.sock'
-    }
+    agent any
 
     tools {
-        nodejs 'NodeJS' // Le nom que vous avez donné à votre installation NodeJS
+        nodejs 'NodeJS' // Le nom donné à ton installation NodeJS dans Jenkins
     }
 
     environment {
@@ -28,9 +25,6 @@ pipeline {
             }
         }
 
-
-        
-
         stage('Install Node.js') {
             steps {
                 nodejs(nodeJSInstallationName: 'NodeJS') {
@@ -44,7 +38,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                    sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
                 }
             }
         }
@@ -52,7 +46,6 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    // Utiliser le secret Docker Hub
                     withCredentials([string(credentialsId: 'docker-hub-password', variable: 'DOCKER_PASSWORD')]) {
                         sh """
                             echo ${DOCKER_PASSWORD} | docker login -u julesbestdev176 --password-stdin
@@ -66,19 +59,15 @@ pipeline {
         stage('Deploy to Nginx Server') {
             steps {
                 script {
-                    // Utiliser le secret SSH
-                    withCredentials([string(credentialsId: 'ssh-private-key', variable: 'SSH_KEY')]) {
-                        sh '''
-                            echo "${SSH_KEY}" > /tmp/ssh_key
-                            chmod 600 /tmp/ssh_key
-                            ssh -o StrictHostKeyChecking=no -i /tmp/ssh_key user@your-server-ip \'
+                    withCredentials([sshUserPrivateKey(credentialsId: 'ssh-private-key', keyFileVariable: 'SSH_KEY')]) {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} user@your-server-ip <<EOF
                                 docker pull ${DOCKER_IMAGE}:${DOCKER_TAG}
                                 docker stop your-container-name || true
                                 docker rm your-container-name || true
                                 docker run -d --name your-container-name -p 80:80 ${DOCKER_IMAGE}:${DOCKER_TAG}
-                            \'
-                            rm -f /tmp/ssh_key
-                        '''
+                            EOF
+                        """
                     }
                 }
             }
