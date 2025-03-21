@@ -3,7 +3,6 @@ pipeline {
 
     tools {
         nodejs 'NodeJS' // Le nom donné à ton installation NodeJS dans Jenkins
-        docker 'docker'
     }
 
     environment {
@@ -21,7 +20,7 @@ pipeline {
         stage('Check Docker') {
             steps {
                 script {
-                    sh 'docker version'
+                    sh 'docker version' // Exécuter Docker sans spécifier de tool
                 }
             }
         }
