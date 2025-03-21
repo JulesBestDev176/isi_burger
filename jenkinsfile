@@ -1,9 +1,8 @@
 pipeline {
     agent {
         docker {
-            image 'docker:latest'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'  // Supprimez cette ligne
-            args '-e DOCKER_HOST=tcp://host.docker.internal:2375'
+            image 'docker:latest'  // Utilise l'image Docker pour exécuter les étapes
+            args '-e DOCKER_HOST=tcp://host.docker.internal:2375'  // Utilise Docker via TCP
         }
     }
 
@@ -54,16 +53,16 @@ pipeline {
     }
 
     post {
-    always {
-        node('default') {  
-            cleanWs()
+        always {
+            node('default') {  // Utilise un agent avec le label 'default'
+                cleanWs()  // Nettoie l'espace de travail
+            }
+        }
+        success {
+            echo 'Pipeline exécuté avec succès!'
+        }
+        failure {
+            echo 'Le pipeline a échoué.'
         }
     }
-    success {
-        echo 'Pipeline exécuté avec succès!'
-    }
-    failure {
-        echo 'Le pipeline a échoué.'
-    }
-}
 }
