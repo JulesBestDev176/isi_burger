@@ -10,6 +10,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB; 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use App\Mail\StatutCommandeCredentialsMail;
+use Illuminate\Support\Facades\Mail;
 
 class CommandeController extends Controller
 {
@@ -240,7 +242,14 @@ class CommandeController extends Controller
         $commande->statut = $newStatus;
 
         if ($newStatus === 'payée') {
+            $user = User::find($commande->user_id);
             $commande->date_paiement = now();
+            try {
+                Mail::to($user->email)->send(new StatutCommandeCredentialsMail($user->email, $commande));
+            } catch (\Exception $e) {
+                
+                \Log::error('Erreur lors de l\'envoi de l\'e-mail : ' . $e->getMessage());
+            }
         }
 
         $commande->save();
@@ -271,8 +280,16 @@ class CommandeController extends Controller
 
         
         if ($statut === 'payée') {
+            $user = Client::find($commande->user_id);
             $commande->date_paiement = now();
             $commande->paiement_montant = $commande->paiement_montant ?? 0; 
+            try {
+                Mail::to($user->email)->send(new StatutCommandeCredentialsMail($user->email, $commande));
+            } catch (\Exception $e) {
+                
+                \Log::error('Erreur lors de l\'envoi de l\'e-mail : ' . $e->getMessage());
+            }
+            
         }
 
         
