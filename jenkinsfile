@@ -1,8 +1,8 @@
 pipeline {
     agent {
         docker {
-            image 'docker:latest'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
+            image 'docker:20.10.7-dind'  // Utiliser une image Docker avec DinD
+            args '-v /var/run/docker.sock:/var/run/docker.sock'  // Partager le socket Docker
         }
     }
 
@@ -25,7 +25,7 @@ pipeline {
         stage('Check Docker') {
             steps {
                 script {
-                    sh 'docker version' // Exécuter Docker sans spécifier de tool
+                    sh 'docker version' // Vérifier la version de Docker dans le conteneur DinD
                 }
             }
         }
