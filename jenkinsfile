@@ -24,13 +24,20 @@ pipeline {
                     sh '''
                     apt-get update
                     apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+
+                    # Ajouter la clé GPG officielle de Docker
                     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+
+                    # Ajouter le dépôt Docker pour Ubuntu (ajuste pour ta version si nécessaire)
                     add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+                    
+                    # Mettre à jour les sources
                     apt-get update
-                    apt-get install -y docker-ce
-                    systemctl enable docker
-                    systemctl start docker
+                    
+                    # Installer Docker
+                    apt-get install -y docker-ce docker-ce-cli containerd.io
                     '''
+
                 }
             }
         }
