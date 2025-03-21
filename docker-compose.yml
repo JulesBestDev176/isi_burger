@@ -44,8 +44,23 @@ services:
     networks:
       - laravel_network
 
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock 
+      - jenkins_home:/var/jenkins_home
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    networks:
+      - laravel_network
+
 volumes:
   pgdata:
+  jenkins_home:
 
 networks:
   laravel_network:
+    driver: bridge
