@@ -54,16 +54,16 @@ pipeline {
     }
 
     post {
-        always {
-            node {
-                cleanWs()
-            }
-        }
-        success {
-            echo 'Pipeline exécuté avec succès!'
-        }
-        failure {
-            echo 'Le pipeline a échoué.'
+    always {
+        node('default') {  
+            cleanWs()
         }
     }
+    success {
+        echo 'Pipeline exécuté avec succès!'
+    }
+    failure {
+        echo 'Le pipeline a échoué.'
+    }
+}
 }
