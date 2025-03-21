@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    tools {
+        nodejs 'NodeJS' // Le nom que vous avez donné à votre installation NodeJS
+    }
+
     environment {
         DOCKER_IMAGE = 'julesbestdev176/isi_burger'
         DOCKER_TAG = 'latest'
@@ -13,17 +17,17 @@ pipeline {
             }
         }
 
-        stage('Préparation') {
+        
+
+        stage('Install Node.js') {
             steps {
-                sh '''
-                apk add --update nodejs npm
-                node --version
-                npm --version
-                npm run build
-                '''
+                nodejs(nodeJSInstallationName: 'NodeJS') {
+                    sh 'node --version'
+                    sh 'npm install'
+                    sh 'npm run build'
+                }
             }
         }
-
 
         stage('Build Docker Image') {
             steps {
