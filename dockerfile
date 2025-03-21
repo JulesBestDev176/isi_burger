@@ -1,33 +1,39 @@
-FROM php:8.2-fpm
+# Utiliser une image de base avec PHP et Apache
+FROM php:8.1-apache
 
-# Installer les dépendances nécessaires pour Docker et Docker Compose
+# Installer les dépendances système
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
-    curl \
-    libpq-dev \
-    lsb-release \
-    && docker-php-ext-install pdo pdo_pgsql \
-    && curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose \
-    && chmod +x /usr/local/bin/docker-compose
+    libzip-dev \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    nodejs \
+    npm \
+    && docker-php-ext-install pdo_mysql zip exif pcntl bcmath gd
 
-# Installer Node.js et npm
-RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
-    && apt-get install -y nodejs
-
-# Copier Composer
+# Installer Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-WORKDIR /var/www
+# Définir le répertoire de travail
+WORKDIR /var/www/html
 
+# Copier les fichiers de l'application
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader \
-    && npm install \
-    && npm run production
+# Installer les dépendances PHP
+RUN composer install --no-dev --optimize-autoloader
 
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+# Installer les dépendances Node.js et compiler les assets
+RUN npm install && npm run build
 
-EXPOSE 9000
+# Configurer Apache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN a2enmod rewrite
 
-CMD ["php-fpm"]
+# Exposer le port 80
+EXPOSE 80
+
+# Commande pour démarrer Apache
+CMD ["apache2-foreground"]

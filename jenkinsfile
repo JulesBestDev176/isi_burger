@@ -1,28 +1,23 @@
 pipeline {
-    agent {
-        docker {
-            image 'docker:latest'  // Utilise l'image Docker pour exécuter les étapes
-            args '-e DOCKER_HOST=tcp://host.docker.internal:2375'  // Utilise Docker via TCP
-        }
-    }
+    agent any
 
     environment {
-        GIT_REPO = 'https://github.com/JulesBestDev176/isi_burger.git'
-        BRANCH_NAME = 'fall_souleymane_burger'
+        DOCKER_IMAGE = 'julesbestdev176/isi_burger'
+        DOCKER_TAG = 'latest'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git url: "${GIT_REPO}", branch: "${BRANCH_NAME}"
+                git branch: 'fall_souleymane_burger', url: 'https://github.com/JulesBestDev176/isi_burger.git'
             }
         }
 
-        stage('Run Tests') {
+        stage('Install Node.js') {
             steps {
-                script {
-                    sh 'composer install --no-dev --optimize-autoloader'
-                    sh 'php artisan test'
+                nodejs(nodeJSInstallationName: 'NodeJS') {
+                    sh 'npm install'
+                    sh 'npm run build'
                 }
             }
         }
@@ -30,39 +25,44 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'docker-compose -f docker-compose.yml build --no-cache'
+                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
                 }
             }
         }
 
-        stage('Run Docker Containers') {
+        stage('Push Docker Image') {
             steps {
                 script {
-                    sh 'docker-compose -f docker-compose.yml up -d'
+                    // Utiliser le secret Docker Hub
+                    withCredentials([string(credentialsId: 'docker-hub-password', variable: 'DOCKER_PASSWORD')]) {
+                        sh """
+                            echo ${DOCKER_PASSWORD} | docker login -u julesbestdev176 --password-stdin
+                            docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+                        """
+                    }
                 }
             }
         }
 
-        stage('Clean Up') {
+        stage('Deploy to Nginx Server') {
             steps {
                 script {
-                    sh 'docker-compose down'
+                    // Utiliser le secret SSH
+                    withCredentials([string(credentialsId: 'ssh-private-key', variable: 'SSH_KEY')]) {
+                        sh '''
+                            echo "${SSH_KEY}" > /tmp/ssh_key
+                            chmod 600 /tmp/ssh_key
+                            ssh -o StrictHostKeyChecking=no -i /tmp/ssh_key user@your-server-ip \'
+                                docker pull ${DOCKER_IMAGE}:${DOCKER_TAG}
+                                docker stop your-container-name || true
+                                docker rm your-container-name || true
+                                docker run -d --name your-container-name -p 80:80 ${DOCKER_IMAGE}:${DOCKER_TAG}
+                            \'
+                            rm -f /tmp/ssh_key
+                        '''
+                    }
                 }
             }
-        }
-    }
-
-    post {
-        always {
-            node('default') {  // Utilise un agent avec le label 'default'
-                cleanWs()  // Nettoie l'espace de travail
-            }
-        }
-        success {
-            echo 'Pipeline exécuté avec succès!'
-        }
-        failure {
-            echo 'Le pipeline a échoué.'
         }
     }
 }
