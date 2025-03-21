@@ -1,8 +1,13 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'docker:latest'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
 
     tools {
-        nodejs 'NodeJS' // Le nom donné à ton installation NodeJS dans Jenkins
+        nodejs 'NodeJS' // Nom de l'outil configuré dans Jenkins
     }
 
     environment {
@@ -17,20 +22,12 @@ pipeline {
             }
         }
 
-        stage('Check Docker') {
-            steps {
-                script {
-                    sh 'docker version' // Exécuter Docker sans spécifier de tool
-                }
-            }
-        }
-
         stage('Install Node.js') {
             steps {
-                nodejs(nodeJSInstallationName: 'NodeJS') {
-                    sh 'node --version'
-                    sh 'npm install'
-                    sh 'npm run build'
+                script {
+                    // Utilisation de Node.js configuré par Jenkins tool
+                    sh 'node --version' // Affiche la version de Node.js
+                    sh 'npm install'    // Installe les dépendances
                 }
             }
         }
