@@ -12,7 +12,7 @@ services:
       - .:/var/www
     environment:
       APP_ENV: production
-      APP_KEY: base64:your_app_key_here
+      APP_KEY: base64:IIAH1VauqRl+9oZNQ4m0yQKJcB+DfVhVgAqyYALEPDw=
       DB_CONNECTION: pgsql
       DB_HOST: db
       DB_PORT: 5432
@@ -58,17 +58,32 @@ services:
     container_name: jenkins
     restart: unless-stopped
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock 
       - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock  
     ports:
       - "8080:8080"
       - "50000:50000"
     networks:
       - laravel_network
+    environment:
+      DOCKER_HOST: tcp://dind:2375  
+
+  dind:
+    image: docker:dind
+    container_name: dind
+    restart: unless-stopped
+    privileged: true
+    environment:
+      DOCKER_TLS_CERTDIR: ""  
+    volumes:
+      - dind-data:/var/lib/docker  
+    networks:
+      - laravel_network
 
 volumes:
-  pgdata:
-  jenkins_home:
+  pgdata: 
+  jenkins_home: 
+  dind-data:  
 
 networks:
   laravel_network:

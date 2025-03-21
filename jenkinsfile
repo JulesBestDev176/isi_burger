@@ -2,7 +2,8 @@ pipeline {
     agent {
         docker {
             image 'docker:latest'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'  // Supprimez cette ligne
+            args '-e DOCKER_HOST=tcp://host.docker.internal:2375'
         }
     }
 
@@ -54,7 +55,9 @@ pipeline {
 
     post {
         always {
-            cleanWs()
+            node {
+                cleanWs()
+            }
         }
         success {
             echo 'Pipeline exécuté avec succès!'
