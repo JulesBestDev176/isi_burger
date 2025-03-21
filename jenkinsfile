@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'docker:latest'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
 
     environment {
         GIT_REPO = 'https://github.com/JulesBestDev176/isi_burger.git'
@@ -10,6 +15,15 @@ pipeline {
         stage('Checkout') {
             steps {
                 git url: "${GIT_REPO}", branch: "${BRANCH_NAME}"
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                script {
+                    sh 'composer install --no-dev --optimize-autoloader'
+                    sh 'php artisan test'
+                }
             }
         }
 
